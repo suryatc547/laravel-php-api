@@ -24,7 +24,7 @@ class Users extends Controller
 			$resp['message'] = 'Invalid data send!';
 			$resp['data'] = $validate->messages();
 		} else {
-			$ins = User::create(['name'=>$post['name'],'email'=>$post['email'],'password'=>Hash::make($post['password']),'api_token'=>md5(\Str::random(10))]);
+			$ins = User::create(['name'=>$post['name'],'email'=>$post['email'],'password'=>Hash::make($post['password']),'api_token'=>md5(\Str::random(10)),'profile'=>'','phone'=>'']);
 			if($ins){
 				$resp['message'] = 'Registered successfully!'; $resp['data'] = ['api_token'=>$ins->api_token];
 			} else {

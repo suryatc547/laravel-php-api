@@ -24,5 +24,6 @@ Route::post('register','Api\Users@register');
 Route::prefix('user')->middleware('api-auth')->group(function () {
     // return $request->user();
     // Route::get('test','Api\Dashboard@test');
-    Route::post('/','Api\Dashboard@getUserData');
+    Route::get('/','Api\Dashboard@getUserData');
+    Route::put('/update-profile','Api\Dashboard@updateUserData');
 });
