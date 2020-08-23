@@ -166,6 +166,7 @@ return [
          * Package Service Providers...
          */
         Jenssegers\Mongodb\MongodbServiceProvider::class,
+        Spatie\Cors\CorsServiceProvider::class,
 
         /*
          * Application Service Providers...

@@ -19,12 +19,26 @@ class Users extends Controller
 		$rules['email'] = 'required|email|unique:users';
 		$rules['password'] = 'required|string|min:8|max:13';
 		$rules['confirm'] = 'required|string|same:password';
+		$rules['profile'] = 'mimes:png,jpg,jpeg';
 		$validate = Validator::make($post,$rules);
 		if($validate->fails()){
-			$resp['message'] = 'Invalid data send!';
+			$resp['message'] = 'Invalid data send!'; $resp['code'] = 400;
 			$resp['data'] = $validate->messages();
 		} else {
-			$ins = User::create(['name'=>$post['name'],'email'=>$post['email'],'password'=>Hash::make($post['password']),'api_token'=>md5(\Str::random(10)),'profile'=>'','phone'=>'']);
+			$insData = [
+				'name'=>$post['name'],
+				'email'=>$post['email'],
+				'password'=>Hash::make($post['password']),
+				'api_token'=>Hash::make(\Str::random(10))
+			];
+			$profile = $request->file('profile');
+    		if($profile){
+    			$userId = $insData['api_token'];
+    			$saveAs = $userId.'-'.time().'.'.$profile->extension();
+    			$profile->storeAs('profiles',$saveAs);
+    			$insData['profile'] = $saveAs;
+    		}
+			$ins = User::create($insData);
 			if($ins){
 				$resp['message'] = 'Registered successfully!'; $resp['data'] = ['api_token'=>$ins->api_token];
 			} else {
@@ -41,7 +55,7 @@ class Users extends Controller
 		$rules['password'] = 'required|string';
 		$validate = Validator::make($post,$rules);
 		if($validate->fails()){
-			$resp['message'] = 'Invalid data send!';
+			$resp['message'] = 'Invalid data send!'; $resp['code'] = 400;
 			$resp['data'] = $validate->messages();
 		} else {
 			$auth = User::where('email',$post['email'])->value('password');
@@ -50,7 +64,7 @@ class Users extends Controller
 				$update = User::where('email',$post['email'])->update(['api_token'=>$token]);
 				$resp['message'] = 'Logged in successfully!'; $resp['data'] = ['api_token'=>$token];
 			} else {
-				$resp['message'] = 'Invalid credentials'; $resp['data'] = '';
+				$resp['message'] = 'Invalid credentials'; $resp['data'] = ''; $resp['code'] = 401;
 			}
 		}
 		return response()->json($resp);

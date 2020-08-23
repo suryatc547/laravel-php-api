@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,12 +18,15 @@ use Illuminate\Http\Request;
 // });
 
 
-Route::post('login','Api\Users@login');
-Route::post('register','Api\Users@register');
+// Route::middleware('api-cors')->group(function(){
+	Route::post('login','Api\Users@login');
+	Route::post('register','Api\Users@register');
+// });
 
-Route::prefix('user')->middleware('api-auth')->group(function () {
-    // return $request->user();
-    // Route::get('test','Api\Dashboard@test');
-    Route::get('/','Api\Dashboard@getUserData');
-    Route::put('/update-profile','Api\Dashboard@updateUserData');
+Route::prefix('user')->middleware(['api-auth'])->group(function () {
+    	// return $request->user();
+    	// Route::get('test','Api\Dashboard@test');
+    	Route::get('/','Api\Dashboard@getUserData');
+    	Route::put('/update-profile','Api\Dashboard@updateUserData');
+    	Route::delete('/delete-profile','Api\Dashboard@deleteUserData');
 });

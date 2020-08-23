@@ -16,10 +16,14 @@ class Dashboard extends Controller
 
     private function getToken($request){
     	return $request->isMethod('get')?$request->input('api_token'):@explode(' ', trim($request->header('Authorization')))[1];
+        // return $request->input('api_token');
     }
 
     private function profileData($token){
-    	return User::where('api_token',$token)->select('name','email','profile','phone')->first();
+    	$userData = User::where('api_token',$token)->select('name','email','profile','phone')->first();
+        $img = (@base64_encode(file_get_contents(\Storage::url('profiles/'.$userData->profile))));
+        $userData->profile = $img?'data:image/jpeg;base64,'.$img:'';
+        return $userData;
     }
 
     public function getUserData(Request $request){
@@ -36,12 +40,12 @@ class Dashboard extends Controller
     	$resp = ['code'=>200,'message'=>'error','data'=>NULL];
     	$token = $this->getToken($request);
     	$data = $request->all();
-    	$rules['name'] = 'required|string|max:30';
-    	$rules['phone'] = 'required|numeric';
+    	$rules['name'] = 'required|string|max:30|unique:users,name,'.$token.',api_token';
+    	$rules['phone'] = 'required|numeric|unique:users,phone,'.$token.',api_token';
     	$rules['profile'] = 'nullable|mimes:png,jpg,jpeg';
     	$validate = Validator::make($data,$rules);
     	if($validate->fails()){
-    		$resp['message'] = 'Invalid data send!';
+    		$resp['message'] = 'Invalid data send!'; $resp['code'] = 400;
     		$resp['data'] = $validate->messages();
     	} else {
     		$update['name'] = $data['name'];
@@ -50,7 +54,7 @@ class Dashboard extends Controller
     		if($profile){
     			$userId = User::where('api_token',$token)->value('_id');
     			$saveAs = $userId.'-'.time().'.'.$profile->extension();
-    			$file->storeAs('profiles',$saveAs);
+    			$profile->storeAs('profiles',$saveAs);
     			$update['profile'] = $saveAs;
     		}
     		$result = User::where('api_token',$token)->update($update);
@@ -66,11 +70,12 @@ class Dashboard extends Controller
 
     public function deleteUserData(Request $request){
     	$resp = ['code'=>200,'message'=>'error','data'=>NULL];
-    	$data = $request->all();
+    	// $data = $request->all();
     	$token = $this->getToken($request);
     	$delete = User::where('api_token',$token)->delete();
     	if($delete){
     		$resp['message'] = 'Your account deleted successfully!';
+            $resp['data'] = true;
     	} else {
     		$resp['message'] = 'Unable to delete your account, something went wrong!';
     	} return response()->json($resp);
