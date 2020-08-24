@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Validator;
 
 use App\User;
@@ -20,7 +21,7 @@ class Dashboard extends Controller
     }
 
     private function profileData($token){
-    	$userData = User::where('api_token',$token)->select('name','email','profile','phone')->first();
+    	$userData = User::where('api_token',$token)->select('name','email','profile','phone','countrycode')->first();
         $img = (@base64_encode(file_get_contents(\Storage::url('profiles/'.$userData->profile))));
         $userData->profile = $img?'data:image/jpeg;base64,'.$img:'';
         return $userData;
@@ -41,7 +42,11 @@ class Dashboard extends Controller
     	$token = $this->getToken($request);
     	$data = $request->all();
     	$rules['name'] = 'required|string|max:30|unique:users,name,'.$token.',api_token';
-    	$rules['phone'] = 'required|numeric|unique:users,phone,'.$token.',api_token';
+        $rules['countrycode'] = 'required|string';
+    	// $rules['phone'] = 'required|numeric|unique:users,phone,'.$token.',api_token';
+        $rules['phone'] = ['required','numeric',
+            Rule::unique('users')->where('countrycode',$data['countrycode'])->ignore($token,'api_token')
+        ];
     	$rules['profile'] = 'nullable|mimes:png,jpg,jpeg';
     	$validate = Validator::make($data,$rules);
     	if($validate->fails()){
@@ -50,6 +55,7 @@ class Dashboard extends Controller
     	} else {
     		$update['name'] = $data['name'];
     		$update['phone'] = $data['phone'];
+            $update['countrycode'] = $data['countrycode'];
     		$profile = $request->file('profile');
     		if($profile){
     			$userId = User::where('api_token',$token)->value('_id');

@@ -20,7 +20,8 @@ class CreateUsersTable extends Migration
             $collection->string('password');
             $collection->string('api_token')->default('');
             $collection->string('profile')->default('');
-            $collection->string('phone')->unique()->default('');
+            $collection->string('countrycode')->default('');
+            $collection->string('phone')->default('');
             $collection->timestamps();
             // $collection->timestamp('updated_at');
             // $collection->timestamp('created_at');
